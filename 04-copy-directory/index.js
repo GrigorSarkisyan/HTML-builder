@@ -1,23 +1,15 @@
-const fs = require('fs/promises');
-const path = require('path');
-const sourceDir = 'files';
-const targetDir = 'files-copy';
+const { copyFile, readdir, mkdir, rm } = require('fs/promises');
+const { resolve } = require('path');
 
-const readDirectory = () => {
-  fs.readdir(path.join(__dirname, sourceDir), {withFileTypes: true})
-    .then(files => {
-      files.forEach(file => {
-        fs.copyFile(path.join(__dirname, sourceDir, file.name), path.join(__dirname, targetDir, file.name), 0)
-          .then(() => console.log(`${file.name} - ok`))
-          .catch(err => console.log('Copy failed by reason ', err.code));
-      });
-    })
-    .catch(err => (err !== undefined) && console.log(err));
+const copyDir = async (src, dest) => {
+  await rm(dest, { recursive: true, force: true });
+  await mkdir(dest);
+
+  const files = await readdir(src);
+
+  for (const file of files) {
+    copyFile(resolve(src, file), resolve(dest, file));
+  }
 };
 
-fs.rm(path.join(__dirname, targetDir), {force: true, recursive: true})
-  .then(() => {
-    fs.mkdir(path.join(__dirname, targetDir))
-      .then(() => readDirectory())
-      .catch(err => console.log('Make folder failed by reason', err.code));
-  });
+copyDir(resolve(__dirname, 'files'), resolve(__dirname, 'files-copy'));
